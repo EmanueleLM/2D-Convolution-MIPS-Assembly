@@ -21,16 +21,29 @@ size_img: .word	90601
 size_ker: .word 9
 I:         .word 300 # num of rows in Img
 J:	  .word 300 # num of cols in Img
+X: 	  .word 3 # num of rows in kernel
+Y:        .word 3 # num of cols in kernel
 	.text
 	la $t0, img
 	la $t1, J # load address of J in register
 	lw $t1, 4($t1) # load value of the displacement of first element non-padding of Img in register
 	add.d  $t1, $t0, $t1 # add the offset of the matrix, now $t1 points to the first element of Img non-padding
-	lw $t2, $zero # set the register that controls loop on rows (i.e. I) to zero
-loopRows: 
+	move $t2, $zero # set the register that controls loop on rows (i.e. I) to zero
+loopRows:
+	move $t3, $zero
 	loopCols:
+		move $t4, $zero
 		loopKRows:
+			move $t5, $zero
 			loopKCols:
+				  addi $t4, $t4, 1 # increment the loop counter for the rows of kernel
+				  la   $t0, X # put in $t0 the address of X
+				  lw   $t0, -1(Y) # put in $t0 the number of rows of kernel
+				  bne  $t4, $t0, loopKRows # jump to the loop if we have pixel of kernel not processed yet
+				  addi $t5, $t5, 1 # increment the loop counter for the rows of kernel
+				  la   $t0, Y # put in $t0 the address of Y
+				  lw   $t0, -1(Y) # put in $t0 the number of cols of kernel
+				  bne  $t5, $t0, loopKCols # jump to the loop if we have pixel of kernel not processed yet
 				  addi $t2, $t2, 1 # increment loop counter on rows of Img matrix
 				  la   $t0, I # put in $t0 the address of I
 				  lw   $t0, 0($t0)  # put in $t0 the number of rows
