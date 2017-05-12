@@ -19,7 +19,7 @@ img_new:  .word	0 : 90000 # img result matrix (no padding)
 kernel:   .word	0:9
 size_img: .word	90601
 size_ker: .word 9
-I:         .word 300 # num of rows in Img
+I:        .word 300 # num of rows in Img
 J:	  .word 300 # num of cols in Img
 X: 	  .word 3 # num of rows in kernel
 Y:        .word 3 # num of cols in kernel
@@ -40,17 +40,18 @@ loopRows:
 				  la   $t0, X # put in $t0 the address of X
 				  lw   $t0, -4($t0) # put in $t0 the number of rows of kernel
 				  bne  $t4, $t0, loopKRows # jump to the loop if we have pixel of kernel not processed yet
+				  
 				  addi $t5, $t5, 1 # increment the loop counter for the rows of kernel
 				  la   $t0, Y # put in $t0 the address of Y
 				  lw   $t0, -4($t0) # put in $t0 the number of cols of kernel
 				  bne  $t5, $t0, loopKCols # jump to the loop if we have pixel of kernel not processed yet
+				  
+				  addi $t3, $t3, 1 # increment loop counter on cols of Img matrix
+				  la   $t0, J # put in $t0 the address of J
+				  lw   $t0, 0($t0)  # put in $t0 the number of cols
+				  bne  $t3, $t0, loopCols # exit if we processed all the cols
+				  
 				  addi $t2, $t2, 1 # increment loop counter on rows of Img matrix
 				  la   $t0, I # put in $t0 the address of I
 				  lw   $t0, 0($t0)  # put in $t0 the number of rows
-				  bne  $t2, $t0, endLoops # exit if we processed all the rows (i.e. whole the matrix Img)
-			endLoops:   
-	
-	
-	
-	
-	
+				  bne  $t2, $t0, loopRows # exit if we processed all the rows (i.e. whole the matrix Img) 
