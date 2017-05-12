@@ -35,17 +35,17 @@ loopRows:
 		move $t4, $zero
 		loopKRows:
 			move $t5, $zero
-			loopKCols:
-				  addi $t4, $t4, 1 # increment the loop counter for the rows of kernel
-				  la   $t0, X # put in $t0 the address of X
-				  lw   $t0, -4($t0) # put in $t0 the number of rows of kernel
-				  bne  $t4, $t0, loopKRows # jump to the loop if we have pixel of kernel not processed yet
-				  
+			loopKCols:				  
 				  addi $t5, $t5, 1 # increment the loop counter for the rows of kernel
 				  la   $t0, Y # put in $t0 the address of Y
 				  lw   $t0, -4($t0) # put in $t0 the number of cols of kernel
 				  bne  $t5, $t0, loopKCols # jump to the loop if we have pixel of kernel not processed yet
-				  
+
+				  addi $t4, $t4, 1 # increment the loop counter for the rows of kernel
+				  la   $t0, X # put in $t0 the address of X
+				  lw   $t0, -4($t0) # put in $t0 the number of rows of kernel
+				  bne  $t4, $t0, loopKRows # jump to the loop if we have pixel of kernel not processed yet
+		  
 				  addi $t3, $t3, 1 # increment loop counter on cols of Img matrix
 				  la   $t0, J # put in $t0 the address of J
 				  lw   $t0, 0($t0)  # put in $t0 the number of cols
