@@ -39,7 +39,6 @@ loopRows:
 			# first part: J*4 -> $t7
 			la   $t7, J # calculate the offset of the new line of the matrix Img
 			lw   $t7, 0($t7) # ..
-			mul  $t7, $t7, 4 # convert it in an word-address by multipling it for the size of a word
 			# second part: 4*(x+i-1) -> $t6
 			addi $6, $t4, -1
 			add  $t6, $t6, $t2 
@@ -54,10 +53,32 @@ loopRows:
 				  subi $t0, $t3, 1 # calculate j-1
 				  add  $t0, $t0, $t5 # add it to y
 				  mul  $t7, $t7, $t0 # J*4(y+j-1) -> $t7
-				  add  $t7, $t7, $t6 # add to the previous 4*(x+i-1) -> $t7
+				  add  $t7, $t7, $t6 # add to the previous 4*(x+i-1) -> $t7, so we have the linear address if img in $t7
+				  mul  $t7, $t7, 4
 				  
-				 # REGISTERS IN USE: {$2, $3, $4, $5, $7}
-				 # REGISTERS AVAILABLE : {$0, $1, $6}
+				  # REGISTERS IN USE: {$2, $3, $4, $5, $7}
+				  # REGISTERS AVAILABLE : {$0, $1, $6}				 
+				  # now we can compute convolution between kernel and matrix img
+				  la   $t0, img # put in $t0 the address of img (calculated as address(img)+offset in $t7)
+				  add  $t0, $t0, $t7 # ..
+				  lw   $t0, ($t0) # put in $t0 the value of img at the specific offset
+				  mul  $t1, $t4, 4 # put in $t1 kernel_num_of_rows*4
+				  mul  $t6, $t5, 4 # put in $t6 the column offset of kernel
+				  la   $t1, kernel($t1)
+				  add  $t1, $t1, $t6 # we finally have in $t1 the address of kernel specific pixel
+				  lw   $t1, ($t1) # we put in the register the value of the variable at that memory address
+				  
+				  # REGISTERS IN USE: {$t0, $t1, $2, $3, $4, $5}
+				  # REGISTERS AVAILABLE : {$t6, $t7}				  
+				  # calculate kernel*img
+				  mul  $t1, $t1, $t0  # multiply kernel*img
+				  la   $t6, conv # put in $t6 the content of conv
+				  lw   $t6, ($t6) # ..
+				  add  $t1, $t1, $t6 # conv += kernel*img
+				  sw   $t1, conv
+				  
+				  # .. #
+				  # .. #
 				  
 				  # we increment the loop's variable and we exit form each respective loops if the have reached their assignation boundary
 				  #
