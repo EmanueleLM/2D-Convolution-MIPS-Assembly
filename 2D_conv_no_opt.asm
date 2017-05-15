@@ -23,35 +23,62 @@ I:        .word 300 # num of rows in Img
 J:	  .word 300 # num of cols in Img
 X: 	  .word 3 # num of rows in kernel
 Y:        .word 3 # num of cols in kernel
+offset:   .word 0 # initial offset of the center of the kernel wrt the matrix img; offset = (#cols_img+1)*4+(j+1)*4 = 4*(#cols_img+j+2)
+conv:     .word 0 # variable for the value of the pixel in the new matrix img_new
 	.text
-	la $t0, img
-	la $t1, J # load address of J in register
-	lw $t1, 4($t1) # load value of the displacement of first element non-padding of Img in register
-	add  $t1, $t0, $t1 # add the offset of the matrix, now $t1 points to the first element of Img non-padding
-	move $t2, $zero # set the register that controls loop on rows (i.e. I) to zero
+	or $t2, 1 # set the register that controls loop on rows (i.e. I) to zero, so it controls variable i
 loopRows:
-	move $t3, $zero
+	or $t3, 1 # $t3 will control variable j, number of columns in img, from now on
 	loopCols:
-		move $t4, $zero
+		andi $t4, 0
 		loopKRows:
-			move $t5, $zero
-			loopKCols:				  
-				  addi $t5, $t5, 1 # increment the loop counter for the rows of kernel
-				  la   $t0, Y # put in $t0 the address of Y
-				  lw   $t0, -4($t0) # put in $t0 the number of cols of kernel
-				  bne  $t5, $t0, loopKCols # jump to the loop if we have pixel of kernel not processed yet
-
+			sw   $zero, conv # set the value of the convolution pixel initially to zero
+			andi $t5, 0 # set register to 0 (please consider to move these two lines between the instructions that handles with $t7, in order to fasten the code)
+			
+			# pre-calculate J*4 and (x+i-1)*4: that's  because the linear address is l_addr = J*4(y+j-1) + 4*(x+i-1)
+			# first part: J*4 -> $t7
+			la   $t7, J # calculate the offset of the new line of the matrix Img
+			lw   $t7, 0($t7) # ..
+			mul  $t7, $t7, 4 # convert it in an word-address by multipling it for the size of a word
+			# second part: 4*(x+i-1) -> $t6
+			addi $6, $t4, -1
+			add  $t6, $t6, $t2 
+			
+			# REGISTERS IN USE: {$2, $3, $4, $5, $6, $7}
+			# REGISTERS AVAILABLE : {$0, $1}
+			loopKCols:
+				  
+				  # we calculate the convolution between the kernel and the img submatrix
+				  # 
+				  # let's finish the calculation of the address in img
+				  subi $t0, $t3, 1 # calculate j-1
+				  add  $t0, $t0, $t5 # add it to y
+				  mul  $t7, $t7, $t0 # J*4(y+j-1) -> $t7
+				  add  $t7, $t7, $t6 # add to the previous 4*(x+i-1) -> $t7
+				  
+				 # REGISTERS IN USE: {$2, $3, $4, $5, $7}
+				 # REGISTERS AVAILABLE : {$0, $1, $6}
+				  
+				  # we increment the loop's variable and we exit form each respective loops if the have reached their assignation boundary
+				  #
 				  addi $t4, $t4, 1 # increment the loop counter for the rows of kernel
 				  la   $t0, X # put in $t0 the address of X
-				  lw   $t0, -4($t0) # put in $t0 the number of rows of kernel
-				  bne  $t4, $t0, loopKRows # jump to the loop if we have pixel of kernel not processed yet
-		  
+				  lw   $t0, ($t0) # put in $t0 the number of rows of kernel
+				  blt  $t4, $t0, loopKRows # jump to the loop if we have pixel of kernel not processed yet
+				  
+				  
+				  # now we put the new value of convolution in the respective pixel of img_new 
+				  # the img_new address is calculated in this way: 
+			  	  # ... #
+			  	  # ... #
+				  
+				  # increment loop counters on matrix img				  
 				  addi $t3, $t3, 1 # increment loop counter on cols of Img matrix
 				  la   $t0, J # put in $t0 the address of J
-				  lw   $t0, 0($t0)  # put in $t0 the number of cols
-				  bne  $t3, $t0, loopCols # exit if we processed all the cols
+				  lw   $t0, ($t0)  # put in $t0 the number of cols
+				  blt  $t3, $t0, loopCols # exit if we processed all the cols
 				  
 				  addi $t2, $t2, 1 # increment loop counter on rows of Img matrix
 				  la   $t0, I # put in $t0 the address of I
-				  lw   $t0, 0($t0)  # put in $t0 the number of rows
-				  bne  $t2, $t0, loopRows # exit if we processed all the rows (i.e. whole the matrix Img) 
+				  lw   $t0, ($t0)  # put in $t0 the number of rows
+				  blt  $t2, $t0, loopRows # exit if we processed all the rows (i.e. whole the matrix Img) 
