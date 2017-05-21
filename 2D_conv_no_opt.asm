@@ -14,13 +14,13 @@
 # This preliminary version is not optimized at all: we will study an optimized verision of the algorithm in the future #
 
 	.data
-img:	  .word 0 : 90601 # padded matrix, we assume as input a 300*300 pixel image, so the padded version is a 301*301 pixels matrix
-img_new:  .word	0 : 90000 # img result matrix (no padding)
+img_new:  .word	0 : 900 # img result matrix (no padding)
 kernel:   .word	0:9
-size_img: .word	90601
+img:	  .word 0 : 1024 # padded matrix, we assume as input a 300*300 pixel image, so the padded version is a 302*302 pixels matrix
+size_img: .word	1024
 size_ker: .word 9
-I:        .word 300 # num of rows in Img
-J:	  .word 300 # num of cols in Img
+I:        .word 32 # num of rows in Img (with padding)
+J:	  .word 32 # num of cols in Img (with padding)
 X: 	  .word 3 # num of rows in kernel
 Y:        .word 3 # num of cols in kernel
 offset:   .word 0 # initial offset of the center of the kernel wrt the matrix img; offset = (#cols_img+1)*4+(j+1)*4 = 4*(#cols_img+j+2)
@@ -41,13 +41,13 @@ and $t7, 0
 la $t2, kernel
 la $t3, size_ker
 lw $t3, ($t3)
-ori $t4, 1
-loopFillKernel:		
+andi $t4, 0
+loopFillKernel:	
+		mul $t5, $t4, 4	
+	  	la $t2, kernel($t5)
 	  	sw $t4, ($t2)
-	  	mul $t5, $t4, 4
-	  	add $t2, $t2, $t5
 	  	addi $t4, $t4, 1
-	  	ble  $t4, $t3, loopFillKernel
+	  	blt  $t4, $t3, loopFillKernel
 	  	
 # SET ALL THE T REGISTERS TO ZERO
 and $t0, 0
@@ -62,16 +62,16 @@ and $t7, 0
 # initialize the img matrix to 1 in each block, 0 in the padding ones
 # TODO #
 # .. #    
-la   $t0, J # put in $t0 the number of elements in a row of img
-lw   $t0, ($t0) # ..
-mul  $t0, $t0, 4 # we calculate in place the size of a row of words
 addi $t7, $zero, 1 # set the value of each img pixel to 1
-addi $t2, $zero, 1 # set the register that controls loop on rows (i.e. I) to zero, so it controls variable i
+addi $t2, $zero, 1 # set the register that controls loop on rows (i.e. I) to 1, so it controls variable i
 loopFillRowsImg:
-		addi $t3, $zero, 1 # $t3 will control variable j, number of columns in img, from now on
+		la   $t0, J # put in $t0 the number of elements in a row of img
+		lw   $t0, ($t0) # ..
+		mul  $t0, $t0, 4 # calculate size of a row of img
+		mul $t4, $t2, $t0 # calculate the displacement of the new row
+		addi $t3, $zero, 1 # set the register that controls loop on rows (i.e. I) to 1, so it controls variable i
 		loopFillColsImg:
-				mul $t4, $t2, $t0
-				mul $t5, $t3, 4
+				mul $t5, $t3, 4 # calculate the diaplcement of a pixel in a column
 				add $t6, $t4, $t5 # in $t6 we have the displacement of the img pixel we want to set to 1
 				sw  $t7, img($t6) # set the pixel to 1
 				
@@ -99,9 +99,9 @@ and $t7, 0
 
 # START THE PROGRAM
 	  
-	addi $t2, $zero, 1 # set the register that controls loop on rows (i.e. I) to zero, so it controls variable i
+	addi $t2, $zero, 0 # set the register that controls loop on rows (i.e. I) to zero, so it controls variable i
 loopRows:
-	addi $t3, $zero, 1 # $t3 will control variable j, number of columns in img, from now on
+	addi $t3, $zero, 0 # $t3 will control variable j, number of columns in img, from now on
 	loopCols:
 		sw   $zero, conv # set the current value of conv to zero
 		andi $t4, 0
@@ -121,6 +121,7 @@ loopRows:
 				  # second part: J*4 -> $t7
 				  la   $t7, J # calculate the offset of the new line of the matrix Img
 				  lw   $t7, 0($t7) # ..
+				  addi $t7, $t7, -2 # remeber we have to de--pad the matrix
 				  # let's finish the calculation of the address in img
 				  addi $t0, $t3, -1  # calculate j-1
 				  add  $t0, $t0, $t5 # add it to y
@@ -169,6 +170,7 @@ loopRows:
 				  # the img_new address is calculated in this way: img_address = 4(i*J)+4*j = 4(i*J+j)
 				  la   $t6, J
 				  lw   $t6, ($t6)
+				  addi $t6, $t6, -2
 				  mul  $t6, $t6, $t2 # i*J
 				  add  $t6, $t6, $t3 # i*J+j
 				  mul  $t6, $t6, 4 # 4(i*J+j), the dispatchment of img new pixel
@@ -181,9 +183,13 @@ loopRows:
 				  addi $t3, $t3, 1 # increment loop counter on cols of Img matrix
 				  la   $t0, J # put in $t0 the address of J
 				  lw   $t0, ($t0)  # put in $t0 the number of cols
+				  addi $t0, $t0, -2
 				  blt  $t3, $t0, loopCols # exit if we processed all the cols
 				  
 				  addi $t2, $t2, 1 # increment loop counter on rows of Img matrix
 				  la   $t0, I # put in $t0 the address of I
 				  lw   $t0, ($t0)  # put in $t0 the number of rows
+				  addi $t0, $t0, -2
 				  blt  $t2, $t0, loopRows # exit if we processed all the rows (i.e. whole the matrix Img) 
+				  
+				  nop # a nop for breakpoint reason
