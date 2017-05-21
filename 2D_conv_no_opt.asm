@@ -14,10 +14,10 @@
 # This preliminary version is not optimized at all: we will study an optimized verision of the algorithm in the future #
 
 	.data
+img:	  .word 0 : 1024 # padded matrix, we assume as input a 300*300 pixel image, so the padded version is a 302*302 pixels matrix
 img_new:  .word	0 : 900 # img result matrix (no padding)
 kernel:   .word	0:9
-img:	  .word 0 : 1024 # padded matrix, we assume as input a 300*300 pixel image, so the padded version is a 302*302 pixels matrix
-size_img: .word	1024
+size_img: .word	1024 # this matrix is sized (I+1)*(J+1) word
 size_ker: .word 9
 I:        .word 32 # num of rows in Img (with padding)
 J:	  .word 32 # num of cols in Img (with padding)
@@ -95,18 +95,17 @@ and $t3, 0
 and $t4, 0
 and $t5, 0
 and $t6, 0
-and $t7, 0	  
+and $t7, 0	
 
 # START THE PROGRAM
-	  
-	addi $t2, $zero, 0 # set the register that controls loop on rows (i.e. I) to zero, so it controls variable i
+	sw   $zero, conv # set the current value of conv to zero 
+	addi $t2, $zero, 1 # set the register that controls loop on rows (i.e. I) to zero, so it controls variable i
 loopRows:
-	addi $t3, $zero, 0 # $t3 will control variable j, number of columns in img, from now on
+	addi $t3, $zero, 1 # $t3 will control variable j, number of columns in img, from now on
 	loopCols:
-		sw   $zero, conv # set the current value of conv to zero
+		sw   $zero, conv # set the value of the convolution pixel initially to zero
 		andi $t4, 0
 		loopKRows:
-			sw   $zero, conv # set the value of the convolution pixel initially to zero
 			andi $t5, 0 # set register to 0 (please consider to move these two lines between the instructions that handles with $t7, in order to fasten the code)
 					
 			# REGISTERS IN USE: {$2, $3, $4, $5, $6, $7}
@@ -114,16 +113,16 @@ loopRows:
 			loopKCols:				  
 				  # we calculate the convolution between the kernel and the img submatrix
 				  # 
-				  # pre-calculate J*4 and (x+i-1)*4: that's  because the linear address is l_addr = J*4(y+j-1) + 4*(x+i-1)
-				  # first part: 4*(x+i-1) -> $t6
+				  # pre-calculate J*4 and (x+i-1)*4: that's  because the linear address is l_addr = J*4(y+i-1) + 4*(x+j-1)
+				  # first part: 4*(x+j-1) -> $t6
 				  addi $6, $t4, -1
-				  add  $t6, $t6, $t2 
+				  add  $t6, $t6, $t3 
 				  # second part: J*4 -> $t7
 				  la   $t7, J # calculate the offset of the new line of the matrix Img
 				  lw   $t7, 0($t7) # ..
 				  addi $t7, $t7, -2 # remeber we have to de--pad the matrix
 				  # let's finish the calculation of the address in img
-				  addi $t0, $t3, -1  # calculate j-1
+				  addi $t0, $t2, -1  # calculate i-1
 				  add  $t0, $t0, $t5 # add it to y
 				  mul  $t7, $t7, $t0 # J*4(y+j-1) -> $t7
 				  add  $t7, $t7, $t6 # add to the previous 4*(x+i-1) -> $t7, so we have the linear address if img in $t7
@@ -135,10 +134,13 @@ loopRows:
 				  la   $t0, img # put in $t0 the address of img (calculated as address(img)+offset in $t7)
 				  add  $t0, $t0, $t7 # ..
 				  lw   $t0, ($t0) # put in $t0 the value of img at the specific offset
-				  mul  $t1, $t4, 4 # put in $t1 kernel_num_of_rows*4
+				  la   $t1, Y # put in register the size of the kernel rows
+				  lw   $t1, ($t1) # ..
+				  mul  $t1, $t1, $t4 # multiply to it the current row number in kernel
+				  mul  $t1, $t1, 4 # put in $t1 kernel address				  
 				  mul  $t6, $t5, 4 # put in $t6 the column offset of kernel
-				  la   $t1, kernel($t1)
-				  add  $t1, $t1, $t6 # we finally have in $t1 the address of kernel specific pixel
+				  add  $t1, $t1, $t6 # add the row offset 
+				  la   $t1, kernel($t1) # put in register the kernel+offest of the next pixel
 				  lw   $t1, ($t1) # we put in the register the value of the variable at that memory address
 				  
 				  # REGISTERS IN USE: {$t0, $t1, $2, $3, $4, $5}
@@ -171,9 +173,11 @@ loopRows:
 				  la   $t6, J
 				  lw   $t6, ($t6)
 				  addi $t6, $t6, -2
-				  mul  $t6, $t6, $t2 # i*J
-				  add  $t6, $t6, $t3 # i*J+j
-				  mul  $t6, $t6, 4 # 4(i*J+j), the dispatchment of img new pixel
+				  addi $t7, $t2, -1
+				  mul  $t6, $t6, $t7 # (i-1)*J
+				  addi $t7, $t3, -1
+				  add  $t6, $t6, $t7 # (i-1)*J+(j-1)
+				  mul  $t6, $t6, 4 # 4((i-1)*J+(j-1)), the dispatchment of img new pixel
 				  la   $t7, img_new($t6) # calculate img_address + dispatchment
 				  la   $t6, conv # load address of the convolution calculated so far
 				  lw   $t6, ($t6) # load the value of conv
@@ -184,12 +188,12 @@ loopRows:
 				  la   $t0, J # put in $t0 the address of J
 				  lw   $t0, ($t0)  # put in $t0 the number of cols
 				  addi $t0, $t0, -2
-				  blt  $t3, $t0, loopCols # exit if we processed all the cols
+				  ble  $t3, $t0, loopCols # exit if we processed all the cols
 				  
 				  addi $t2, $t2, 1 # increment loop counter on rows of Img matrix
 				  la   $t0, I # put in $t0 the address of I
 				  lw   $t0, ($t0)  # put in $t0 the number of rows
 				  addi $t0, $t0, -2
-				  blt  $t2, $t0, loopRows # exit if we processed all the rows (i.e. whole the matrix Img) 
+				  ble  $t2, $t0, loopRows # exit if we processed all the rows (i.e. whole the matrix Img) 
 				  
 				  nop # a nop for breakpoint reason
