@@ -4,21 +4,21 @@
 # We take as input two matrices, Img, whose shape is I rows and J columns, which usually represents an image of I*J pixels, 
 # and a kernel matrix K, whose shape is X rows and Y cols. please note that we assume X << I and Y << J 
 # We then apply convolution by calculating the sum of the products between each submatrix in Img and the kernel K 
-# and we store the result in a new matrix Img': 
+# and we store the result in a new matrix img_new: 
 #	we assume to work with a black and white image i.e. just a layer (no tridiemnsional layers are considered such as RGB images)
 #	we assume that the dimension of the kernel is 3*3
-#	we assume that the 'center' of the kernel is K(1,1) (I and J both belongs to teh range [0,2])
-#	we assume to padd the Img matrix with a border pixel on each dimension (i.e. we will obtain a J+1,I+1 matrix)
-#	we assume that teh padding is done by assuming 0 (zero) as value fo te respective pixel
+#	we assume that the 'center' of the kernel is K(1,1) (I and J both belongs to the range [0,2])
+#	we assume to apply padding to the img matrix with a border pixel on each dimension (i.e. we will obtain a J+1,I+1 matrix)
+#	we assume that the padding is done by assuming 0 (zero) as value fo te respective pixel
 #
 # This preliminary version is not optimized at all: we will study an optimized verision of the algorithm in the future #
 
 	.data
 img_new:  .word	0 : 900 # img result matrix (no padding)
 img:	  .word 0 : 1024 # padded matrix, we assume as input a 300*300 pixel image, so the padded version is a 302*302 pixels matrix
-kernel:   .word	0:9
+kernel:   .word	0:9 # kernel matrix, we will fill it with values from 0 to 8 (anyhow, you can initialize it as you want in the loopFillKernel loop)
 size_img: .word	1024 # this matrix is sized (I+1)*(J+1) word
-size_ker: .word 9
+size_ker: .word 9 # number of words that compose the kernel matrix
 I:        .word 32 # num of rows in Img (with padding)
 J:	  .word 32 # num of cols in Img (with padding)
 X: 	  .word 3 # num of rows in kernel
@@ -196,5 +196,3 @@ loopRows:
 				  lw   $t0, ($t0)  # put in $t0 the number of rows
 				  addi $t0, $t0, -2
 				  ble  $t2, $t0, loopRows # exit if we processed all the rows (i.e. whole the matrix Img) 
-				  
-				  nop # a nop for breakpoint reason
