@@ -14,8 +14,8 @@
 # This preliminary version is not optimized at all: we will study an optimized verision of the algorithm in the future #
 
 	.data
-img:	  .word 0 : 1024 # padded matrix, we assume as input a 300*300 pixel image, so the padded version is a 302*302 pixels matrix
 img_new:  .word	0 : 900 # img result matrix (no padding)
+img:	  .word 0 : 1024 # padded matrix, we assume as input a 300*300 pixel image, so the padded version is a 302*302 pixels matrix
 kernel:   .word	0:9
 size_img: .word	1024 # this matrix is sized (I+1)*(J+1) word
 size_ker: .word 9
@@ -79,11 +79,13 @@ loopFillRowsImg:
 				addi $t3, $t3, 1 # increment loop counter on cols of Img matrix
 				la   $t0, J # put in $t0 the address of J
 				lw   $t0, ($t0)  # put in $t0 the number of cols
-				blt  $t3, $t0, loopFillColsImg # exit if we processed all the cols
+				addi $t0, $t0, -2
+				ble  $t3, $t0, loopFillColsImg # exit if we processed all the cols
 				  
 				addi $t2, $t2, 1 # increment loop counter on rows of Img matrix
 				la   $t0, I # put in $t0 the address of I
 				lw   $t0, ($t0)  # put in $t0 the number of rows
+				addi $t0, $t0, -2
 				blt  $t2, $t0, loopFillRowsImg # exit if we processed all the rows (i.e. whole the matrix Img) 
 
 	  	
@@ -104,7 +106,7 @@ loopRows:
 	addi $t3, $zero, 1 # $t3 will control variable j, number of columns in img, from now on
 	loopCols:
 		sw   $zero, conv # set the value of the convolution pixel initially to zero
-		andi $t4, 0
+		andi $t4, 0 # $t4 controls the y in the kernel, aka the rows
 		loopKRows:
 			andi $t5, 0 # set register to 0 (please consider to move these two lines between the instructions that handles with $t7, in order to fasten the code)
 					
@@ -114,19 +116,18 @@ loopRows:
 				  # we calculate the convolution between the kernel and the img submatrix
 				  # 
 				  # pre-calculate J*4 and (x+i-1)*4: that's  because the linear address is l_addr = J*4(y+i-1) + 4*(x+j-1)
-				  # first part: 4*(x+j-1) -> $t6
-				  addi $6, $t4, -1
-				  add  $t6, $t6, $t3 
-				  # second part: J*4 -> $t7
+				  # first part: (y+i-1) -> $t6
+				  addi $t6, $t4, -1 # (y-1)
+				  add  $t6, $t6, $t2 # (y+i-1)
+				  # second part: J -> $t7
 				  la   $t7, J # calculate the offset of the new line of the matrix Img
-				  lw   $t7, 0($t7) # ..
-				  addi $t7, $t7, -2 # remeber we have to de--pad the matrix
+				  lw   $t7, ($t7) # ..
 				  # let's finish the calculation of the address in img
-				  addi $t0, $t2, -1  # calculate i-1
-				  add  $t0, $t0, $t5 # add it to y
-				  mul  $t7, $t7, $t0 # J*4(y+j-1) -> $t7
-				  add  $t7, $t7, $t6 # add to the previous 4*(x+i-1) -> $t7, so we have the linear address if img in $t7
-				  mul  $t7, $t7, 4
+				  addi $t0, $t3, -1  # calculate j-1
+				  add  $t0, $t0, $t5 # add it to x
+				  mul  $t7, $t7, $t6 # J*(y+i-1) -> $t7
+				  add  $t7, $t7, $t0 # add to the previous 4*(x+j-1) -> $t7, so we have the linear address if img in $t7
+				  mul  $t7, $t7, 4 # multiply all the stuff by 4
 				  
 				  # REGISTERS IN USE: {$2, $3, $4, $5, $7}
 				  # REGISTERS AVAILABLE : {$0, $1, $6}				 
