@@ -1,7 +1,7 @@
 # 2--D convolution in MIPS--assebly #
 # @author: Emanuele La Malfa    12/05/2017   #
 #
-# We take as input two matrices, Img, whose shape is I rows and J columns, which usually represents an image of I*J pixels, 
+# We take as input two matrices, img, whose shape is I rows and J columns, which usually represents an image of I*J pixels, 
 # and a kernel matrix K, whose shape is X rows and Y cols. please note that we assume X << I and Y << J 
 # We then apply convolution by calculating the sum of the products between each submatrix in Img and the kernel K 
 # and we store the result in a new matrix img_new: 
@@ -27,17 +27,7 @@ offset:   .word 0 # initial offset of the center of the kernel wrt the matrix im
 conv:     .word 0 # variable for the value of the pixel in the new matrix img_new
 	.text
 	
-# SET ALL THE T REGISTERS TO ZERO
-and $t0, 0
-and $t1, 0
-and $t2, 0
-and $t3, 0
-and $t4, 0
-and $t5, 0
-and $t6, 0
-and $t7, 0
-
-# initialize the kernel matrix (from 1 to 9, e.g. kernel[1,1] will contain value 5, kernel[0,0] the value 1 and so on till 9)
+# initialize the kernel matrix (from 0 to 8, e.g. kernel[1,1] will contain value 4, kernel[0,0] the value 0 and so on till kernel[2,2]=8)
 la $t2, kernel
 la $t3, size_ker
 lw $t3, ($t3)
@@ -152,10 +142,7 @@ loopRows:
 				  lw   $t6, ($t6) # ..
 				  add  $t1, $t1, $t6 # conv += kernel*img
 				  sw   $t1, conv
-				  
-				  # .. #
-				  # .. #
-				  
+
 				  # we increment the loop's variable and we exit form each respective loops if the have reached their assignation boundary
 				  #
 				  addi $t5, $t5, 1 # increment the loop counter for the rows of kernel
@@ -163,36 +150,36 @@ loopRows:
 				  lw   $t0, ($t0) # put in $t0 the number of rows of kernel
 				  blt  $t5, $t0, loopKCols # jump to the loop if we have pixel of kernel not processed yet
 
-				  addi $t4, $t4, 1 # increment the loop counter for the rows of kernel
-				  la   $t0, X # put in $t0 the address of X
-				  lw   $t0, ($t0) # put in $t0 the number of rows of kernel
-				  blt  $t4, $t0, loopKRows # jump to the loop if we have pixel of kernel not processed yet
+			addi $t4, $t4, 1 # increment the loop counter for the rows of kernel
+			la   $t0, X # put in $t0 the address of X
+			lw   $t0, ($t0) # put in $t0 the number of rows of kernel
+			blt  $t4, $t0, loopKRows # jump to the loop if we have pixel of kernel not processed yet
 				  
 				  
-				  # now we put the new value of convolution in the respective pixel of img_new 
-				  # the img_new address is calculated in this way: img_address = 4(i*J)+4*j = 4(i*J+j)
-				  la   $t6, J
-				  lw   $t6, ($t6)
-				  addi $t6, $t6, -2
-				  addi $t7, $t2, -1
-				  mul  $t6, $t6, $t7 # (i-1)*J
-				  addi $t7, $t3, -1
-				  add  $t6, $t6, $t7 # (i-1)*J+(j-1)
-				  mul  $t6, $t6, 4 # 4((i-1)*J+(j-1)), the dispatchment of img new pixel
-				  la   $t7, img_new($t6) # calculate img_address + dispatchment
-				  la   $t6, conv # load address of the convolution calculated so far
-				  lw   $t6, ($t6) # load the value of conv
-				  sw   $t6, ($t7) # store the value of conv into the img address				  
+			# now we put the new value of convolution in the respective pixel of img_new 
+			# the img_new address is calculated in this way: img_address = 4(i*J)+4*j = 4(i*J+j)
+			la   $t6, J
+			lw   $t6, ($t6)
+			addi $t6, $t6, -2
+			addi $t7, $t2, -1
+			mul  $t6, $t6, $t7 # (i-1)*J
+			addi $t7, $t3, -1
+			add  $t6, $t6, $t7 # (i-1)*J+(j-1)
+			mul  $t6, $t6, 4 # 4((i-1)*J+(j-1)), the dispatchment of img new pixel
+			la   $t7, img_new($t6) # calculate img_address + dispatchment
+			la   $t6, conv # load address of the convolution calculated so far
+			lw   $t6, ($t6) # load the value of conv
+			sw   $t6, ($t7) # store the value of conv into the img address				  
 				  
-				  # increment loop counters on matrix img				  
-				  addi $t3, $t3, 1 # increment loop counter on cols of Img matrix
-				  la   $t0, J # put in $t0 the address of J
-				  lw   $t0, ($t0)  # put in $t0 the number of cols
-				  addi $t0, $t0, -2
-				  ble  $t3, $t0, loopCols # exit if we processed all the cols
-				  
-				  addi $t2, $t2, 1 # increment loop counter on rows of Img matrix
-				  la   $t0, I # put in $t0 the address of I
-				  lw   $t0, ($t0)  # put in $t0 the number of rows
-				  addi $t0, $t0, -2
-				  ble  $t2, $t0, loopRows # exit if we processed all the rows (i.e. whole the matrix Img) 
+	# increment loop counters on matrix img				  
+	addi $t3, $t3, 1 # increment loop counter on cols of Img matrix
+	la   $t0, J # put in $t0 the address of J
+	lw   $t0, ($t0)  # put in $t0 the number of cols
+	addi $t0, $t0, -2
+	ble  $t3, $t0, loopCols # exit if we processed all the cols
+	
+addi $t2, $t2, 1 # increment loop counter on rows of Img matrix
+la   $t0, I # put in $t0 the address of I
+lw   $t0, ($t0)  # put in $t0 the number of rows
+addi $t0, $t0, -2
+ble  $t2, $t0, loopRows # exit if we processed all the rows (i.e. whole the matrix Img)
