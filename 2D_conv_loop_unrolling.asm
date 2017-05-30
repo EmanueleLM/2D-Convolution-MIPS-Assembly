@@ -11,7 +11,10 @@
 #	we assume to apply padding to the img matrix with a border pixel on each dimension (i.e. we will obtain a J+1,I+1 matrix)
 #	we assume that the padding is done by assuming 0 (zero) as value fo te respective pixel
 #
-# This version has the kernel loop unrolled, we will test how cache would eventually benefit of this #
+# This version has the kernel loop unrolled, we will test how cache/branch prediction would eventually benefit of this #
+# Please note that since we had unrolled 9 loops, we obtained a really long piece of code, anyhow we just unrolled
+#  both the loops that control the iteration on kernel matrix columns and rows by directly specifing which address whould
+#  we access to obtain the respective cell of kernel.
 
 	.data
 img_new:  .word	0 : 90000 # img result matrix (no padding)
