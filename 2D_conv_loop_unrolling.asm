@@ -119,7 +119,7 @@ and $t7, 0
 				  lw   $t7, ($t7) # ..
 				  # let's finish the calculation of the address in img
 				  addi $t0, $t3, -1  # calculate j-1
-				  addi  $t0, $t0, 0 # add it to x
+				  addi  $t0, $t0, -1 # add it to x
 				  mul  $t7, $t7, $t6 # J*(y+i-1) -> $t7
 				  add  $t7, $t7, $t0 # add to the previous 4*(x+j-1) -> $t7, so we have the linear address if img in $t7
 				  mul  $t7, $t7, 4 # multiply all the stuff by 4
@@ -165,7 +165,7 @@ and $t7, 0
 				  lw   $t7, ($t7) # ..
 				  # let's finish the calculation of the address in img
 				  addi $t0, $t3, -1  # calculate j-1
-				  addi  $t0, $t0, 1 # add it to x
+				  addi  $t0, $t0, 0 # add it to x
 				  mul  $t7, $t7, $t6 # J*(y+i-1) -> $t7
 				  add  $t7, $t7, $t0 # add to the previous 4*(x+j-1) -> $t7, so we have the linear address if img in $t7
 				  mul  $t7, $t7, 4 # multiply all the stuff by 4
@@ -211,7 +211,7 @@ and $t7, 0
 				  lw   $t7, ($t7) # ..
 				  # let's finish the calculation of the address in img
 				  addi $t0, $t3, -1  # calculate j-1
-				  addi  $t0, $t0, 2 # add it to x
+				  addi  $t0, $t0, 1 # add it to x
 				  mul  $t7, $t7, $t6 # J*(y+i-1) -> $t7
 				  add  $t7, $t7, $t0 # add to the previous 4*(x+j-1) -> $t7, so we have the linear address if img in $t7
 				  mul  $t7, $t7, 4 # multiply all the stuff by 4
@@ -257,7 +257,7 @@ and $t7, 0
 				  lw   $t7, ($t7) # ..
 				  # let's finish the calculation of the address in img
 				  addi $t0, $t3, -1  # calculate j-1
-				  addi  $t0, $t0, 0 # add it to x
+				  addi  $t0, $t0, -1 # add it to x
 				  mul  $t7, $t7, $t6 # J*(y+i-1) -> $t7
 				  add  $t7, $t7, $t0 # add to the previous 4*(x+j-1) -> $t7, so we have the linear address if img in $t7
 				  mul  $t7, $t7, 4 # multiply all the stuff by 4
@@ -303,7 +303,7 @@ and $t7, 0
 				  lw   $t7, ($t7) # ..
 				  # let's finish the calculation of the address in img
 				  addi $t0, $t3, -1  # calculate j-1
-				  addi  $t0, $t0, 1 # add it to x
+				  addi  $t0, $t0, 0 # add it to x
 				  mul  $t7, $t7, $t6 # J*(y+i-1) -> $t7
 				  add  $t7, $t7, $t0 # add to the previous 4*(x+j-1) -> $t7, so we have the linear address if img in $t7
 				  mul  $t7, $t7, 4 # multiply all the stuff by 4
@@ -349,7 +349,7 @@ and $t7, 0
 				  lw   $t7, ($t7) # ..
 				  # let's finish the calculation of the address in img
 				  addi $t0, $t3, -1  # calculate j-1
-				  addi  $t0, $t0, 2 # add it to x
+				  addi  $t0, $t0, 1 # add it to x
 				  mul  $t7, $t7, $t6 # J*(y+i-1) -> $t7
 				  add  $t7, $t7, $t0 # add to the previous 4*(x+j-1) -> $t7, so we have the linear address if img in $t7
 				  mul  $t7, $t7, 4 # multiply all the stuff by 4
@@ -395,7 +395,7 @@ and $t7, 0
 				  lw   $t7, ($t7) # ..
 				  # let's finish the calculation of the address in img
 				  addi $t0, $t3, -1  # calculate j-1
-				  addi  $t0, $t0, 0 # add it to x
+				  addi  $t0, $t0, -1 # add it to x
 				  mul  $t7, $t7, $t6 # J*(y+i-1) -> $t7
 				  add  $t7, $t7, $t0 # add to the previous 4*(x+j-1) -> $t7, so we have the linear address if img in $t7
 				  mul  $t7, $t7, 4 # multiply all the stuff by 4
@@ -441,7 +441,7 @@ and $t7, 0
 				  lw   $t7, ($t7) # ..
 				  # let's finish the calculation of the address in img
 				  addi $t0, $t3, -1  # calculate j-1
-				  addi  $t0, $t0, 1 # add it to x
+				  addi  $t0, $t0, 0 # add it to x
 				  mul  $t7, $t7, $t6 # J*(y+i-1) -> $t7
 				  add  $t7, $t7, $t0 # add to the previous 4*(x+j-1) -> $t7, so we have the linear address if img in $t7
 				  mul  $t7, $t7, 4 # multiply all the stuff by 4
@@ -487,7 +487,7 @@ and $t7, 0
 				  lw   $t7, ($t7) # ..
 				  # let's finish the calculation of the address in img
 				  addi $t0, $t3, -1  # calculate j-1
-				  addi  $t0, $t0, 2 # add it to x
+				  addi  $t0, $t0, 1 # add it to x
 				  mul  $t7, $t7, $t6 # J*(y+i-1) -> $t7
 				  add  $t7, $t7, $t0 # add to the previous 4*(x+j-1) -> $t7, so we have the linear address if img in $t7
 				  mul  $t7, $t7, 4 # multiply all the stuff by 4
