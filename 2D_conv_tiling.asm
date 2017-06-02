@@ -11,7 +11,9 @@
 #	we assume to apply padding to the img matrix with a border pixel on each dimension (i.e. we will obtain a J+1,I+1 matrix)
 #	we assume that the padding is done by assuming 0 (zero) as value fo te respective pixel
 #
-# This preliminary version is not optimized at all: we will study an optimized verision of the algorithm in the future #
+#    Version with tiling implemented: #
+#    This preliminary version is not optimized at all: we will study an optimized verision of the algorithm in the future #
+#    e.g. coupling load/store, eliminate redundant accesses in memory etc.
 
 	.data
 img_new:  .word	0 : 90000 # img result matrix (no padding)
@@ -96,6 +98,7 @@ and $t6, 0
 and $t7, 0	
 
 # calculate the starting address of each tiling sub matrix of img
+# we put the results in a vector of n entries
 la   $t7, small_J
 lw   $t7, ($t7)
 mul  $t7, $t7, 4
@@ -122,7 +125,7 @@ mul  $t6, $t6, 4
 				addi $t3, $zero, 3 # put here a register to control it!
 				blt  $t2, $t3, loop_til_x
 			addi $t1, $t1, 1
-			addi $t3, $zero, 3
+			addi $t3, $zero, 3 # change this one in order to access a non-constant element
 			blt  $t1, $t3, loop_til_y   					   
     					   
             
