@@ -19,15 +19,19 @@
 img_new:  .word	0 : 90000 # img result matrix (no padding)
 img:	  .word 0 : 102040 # padded matrix, we assume as input a 300*300 pixel image, so the padded version is a 302*302 pixels matrix
 kernel:   .word	0:9 # kernel matrix, we will fill it with values from 0 to 8 (anyhow, you can initialize it as you want in the loopFillKernel loop)
-size_img: .word	102040 # this matrix is sized (I+1)*(J+1) word
+size_img: .word	102040 # this matrix is sized (I+1)*(J+1) words
 size_ker: .word 9 # number of words that compose the kernel matrix
 I:        .word 302 # num of rows in Img (with padding)
-J:	  .word 302 # num of cols in Img (with padding)
+J:	      .word 302 # num of cols in Img (with padding)
+i:        .word 0
+j:        .word 0
+y:        .word 0
+x:        .word 0
 img_offset: .word 0 # current address of img + diaplcement due to tiling
-small_I:  .word 100
-small_J:  .word 100
-til_vec_addresses: .word 0:9 # create a vector of img addresses where the tiling will start	
-til_vec_addresses_size: .word 10 # size of tic_vec_addresses (i.e. number of tilings)
+small_I:  .word 50
+small_J:  .word 50
+til_vec_addresses: .word 0:36 # create a vector of img addresses where the tiling will start	
+til_vec_addresses_size: .word 36 # size of tic_vec_addresses (i.e. number of tilings)
 counter:  .word 0 # counts the number of times we execute tiling
 X: 	  .word 3 # num of rows in kernel
 Y:        .word 3 # num of cols in kernel
@@ -122,10 +126,10 @@ mul  $t6, $t6, 4
 					   sw   $t5, ($t3)
 					   addi $t0, $t0, 1
 				addi $t2, $t2, 1
-				addi $t3, $zero, 3 # put here a register to control it!
+				addi $t3, $zero, 6 # put here a register to control it!
 				blt  $t2, $t3, loop_til_x
 			addi $t1, $t1, 1
-			addi $t3, $zero, 3 # change this one in order to access a non-constant element
+			addi $t3, $zero, 6 # change this one in order to access a non-constant element
 			blt  $t1, $t3, loop_til_y   					   
     					   
             
@@ -133,7 +137,7 @@ mul  $t6, $t6, 4
 loopTiling:
 	la   $t0, counter
 	lw   $t0, ($t0)
-	beq  $t0, 9, end
+	beq  $t0, 36, end
 	mul  $t1, $t0, 4 # current address of vector tiling 
 	la   $t2, til_vec_addresses($t1)
 	lw   $t1, ($t2)
@@ -143,15 +147,26 @@ loopTiling:
 	sw   $t0, counter
 
 	sw   $zero, conv # set the current value of conv to zero 
+	la   $t2, i
+	lw   $t2, ($t2)
 	addi $t2, $zero, 1 # set the register that controls loop on rows (i.e. I) to zero, so it controls variable i
+	sw   $t2, i
 loopRows:
+	la   $t3, j
+	lw   $t3, ($t3)
 	addi $t3, $zero, 1 # $t3 will control variable j, number of columns in img, from now on
+	sw   $t3, j
 	loopCols:
 		sw   $zero, conv # set the value of the convolution pixel initially to zero
+		la   $t4, y
+		lw   $t4, ($t4)
 		andi $t4, 0 # $t4 controls the y in the kernel, aka the rows
+		sw   $t4, y
 		loopKRows:
+			la   $t5, x
+			lw   $t5, ($t5)
 			andi $t5, 0 # set register to 0 (please consider to move these two lines between the instructions that handles with $t7, in order to fasten the code)
-					
+			sw   $t5, x		
 			# REGISTERS IN USE: {$2, $3, $4, $5, $6, $7}
 			# REGISTERS AVAILABLE : {$0, $1}
 			loopKCols:				  
@@ -199,13 +214,19 @@ loopRows:
 
 				  # we increment the loop's variable and we exit form each respective loops if the have reached their assignation boundary
 				  #
+				  la   $t5, x
+				  lw   $t5, ($t5)
 				  addi $t5, $t5, 1 # increment the loop counter for the rows of kernel
-				  la   $t0, Y # put in $t0 the address of X
-				  lw   $t0, ($t0) # put in $t0 the number of rows of kernel
+				  sw   $t5, x
+				  la   $t0, X # put in $t0 the address of X
+				  lw   $t0, ($t0) # put in $t0 the number of cols of kernel
 				  blt  $t5, $t0, loopKCols # jump to the loop if we have pixel of kernel not processed yet
 
+			la   $t4, y
+			lw   $t4, ($t4)
 			addi $t4, $t4, 1 # increment the loop counter for the rows of kernel
-			la   $t0, X # put in $t0 the address of X
+			sw   $t4, y
+			la   $t0, Y # put in $t0 the address of X
 			lw   $t0, ($t0) # put in $t0 the number of rows of kernel
 			blt  $t4, $t0, loopKRows # jump to the loop if we have pixel of kernel not processed yet
 				  
@@ -228,13 +249,19 @@ loopRows:
 			lw   $t6, ($t6) # load the value of conv
 			sw   $t6, ($t7) # store the value of conv into the img address  
 				  
-	# increment loop counters on matrix img				  
+	# increment loop counters on matrix img	
+	la   $t3, j
+	lw   $t3, ($t3)				  
 	addi $t3, $t3, 1 # increment loop counter on cols of Img matrix
+	sw   $t3, j
 	la   $t0, small_J # put in $t0 the address of J
 	lw   $t0, ($t0)  # put in $t0 the number of cols
 	ble  $t3, $t0, loopCols # exit if we processed all the cols
-	
+
+la   $t2, i	
+lw   $t2, ($t2)		
 addi $t2, $t2, 1 # increment loop counter on rows of Img matrix
+sw   $t2, i
 la   $t0, small_I # put in $t0 the address of I
 lw   $t0, ($t0)  # put in $t0 the number of rows
 ble  $t2, $t0, loopRows

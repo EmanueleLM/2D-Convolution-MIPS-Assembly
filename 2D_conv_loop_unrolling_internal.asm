@@ -17,13 +17,13 @@
 #  we access to obtain the respective cell of kernel.
 
 	.data
-img_new:  .word	0 : 90000 # img result matrix (no padding)
-img:	  .word 0 : 102040 # padded matrix, we assume as input a 300*300 pixel image, so the padded version is a 302*302 pixels matrix
+img_new:  .word	0 : 900 # img result matrix (no padding)
+img:	  .word 0 : 1024 # padded matrix, we assume as input a 300*300 pixel image, so the padded version is a 302*302 pixels matrix
 kernel:   .word	0:9 # kernel matrix, we will fill it with values from 0 to 8 (anyhow, you can initialize it as you want in the loopFillKernel loop)
-size_img: .word	102040 # this matrix is sized (I+1)*(J+1) word
+size_img: .word	1024 # this matrix is sized (I+1)*(J+1) word
 size_ker: .word 9 # number of words that compose the kernel matrix
-I:        .word 302 # num of rows in Img (with padding)
-J:	  .word 302 # num of cols in Img (with padding)
+I:        .word 32 # num of rows in Img (with padding)
+J:	  .word 32 # num of cols in Img (with padding)
 X: 	  .word 3 # num of rows in kernel
 Y:        .word 3 # num of cols in kernel
 offset:   .word 0 # initial offset of the center of the kernel wrt the matrix img; offset = (#cols_img+1)*4+(j+1)*4 = 4*(#cols_img+j+2)
